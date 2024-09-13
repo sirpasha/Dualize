@@ -6,15 +6,30 @@ set -e  # Exit immediately if a command exits with a non-zero status
 APP_DIR="/opt/dualize"
 SERVICE_NAME="dualize"
 GO_VERSION="1.20.5"
-GO_TARBALL="go${GO_VERSION}.linux-amd64.tar.gz"
-GO_URL="https://dl.google.com/go/${GO_TARBALL}"
 IP_ADDRESS=$(hostname -I | awk '{print $1}')
 INSTALL_DIR="/usr/local/bin"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
+# Determine system architecture
+ARCH=$(uname -m)
+
+if [ "$ARCH" == "x86_64" ]; then
+    GO_ARCH="amd64"
+elif [[ "$ARCH" == "armv7l" || "$ARCH" == "armv6l" ]]; then
+    GO_ARCH="armv6l"
+elif [ "$ARCH" == "aarch64" ]; then
+    GO_ARCH="arm64"
+else
+    echo "Unsupported architecture: $ARCH"
+    exit 1
+fi
+
+GO_TARBALL="go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+GO_URL="https://dl.google.com/go/${GO_TARBALL}"
+
 # Function to install Go
 install_go() {
-    echo "Installing Go..."
+    echo "Installing Go for architecture: $GO_ARCH..."
     wget -q $GO_URL
     sudo tar -C /usr/local -xzf $GO_TARBALL
     rm $GO_TARBALL
